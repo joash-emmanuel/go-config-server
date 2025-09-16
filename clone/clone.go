@@ -9,10 +9,10 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
-var Url = os.Getenv("GIT-URL")
-var Username = os.Getenv("GIT-USERNAME")
-var Password = os.Getenv("GIT-PASSWORD")
-var Branch = os.Getenv("GIT-BRANCH")
+var Url = os.Getenv("GIT_URL")
+var Username = os.Getenv("GIT_USERNAME")
+var Password = os.Getenv("GIT_PASSWORD")
+var Branch = os.Getenv("GIT_BRANCH")
 var Path = "./repo"
 
 func Clone_configs() {
