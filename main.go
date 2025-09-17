@@ -19,14 +19,14 @@ import (
 func main() {
 	// Loadenv()
 	// clone.Clone_configs()
-	// go pull.Pull_configs()
-	pull.Fetch_configs()
+
+	go pull.Pull_configs()
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.GET("/:filename/:environment", servicefetch.Retrieve_data)
 
-	router.Run(":8089")
+	router.Run(":8080")
 }
 
 // http://localhost:8089/test-service/uat
