@@ -17,6 +17,7 @@ pipeline {
                     def repoName = gitUrl.replaceAll('.*\\/([^\\/]+?)(?:\\.git)?$', '$1')
                     env.GIT_REPO_NAME = repoName // Set a new environment variable
                     echo "Git Repository Name: ${env.GIT_REPO_NAME}"
+                    
                 }
             }
         }
