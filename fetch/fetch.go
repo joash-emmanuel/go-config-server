@@ -61,7 +61,7 @@ func Fetch_configs() plumbing.Hash {
 			}
 
 			for _, r := range remoteRefs {
-				fmt.Println(r.Hash())
+				// fmt.Println(r.Hash()) // has the ones with multiple zeros (symbolic reference) and the actual value (hash reference)
 				if r.Type() == plumbing.HashReference {
 					fmt.Println(r.Hash())
 					// return r.Hash()

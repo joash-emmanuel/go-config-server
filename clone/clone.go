@@ -2,6 +2,7 @@ package clone
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/go-git/go-git/v6"
@@ -38,7 +39,20 @@ func Clone_configs() {
 
 	branches, _ := r.Branches()
 	branches.ForEach(func(branch *plumbing.Reference) error {
-		fmt.Println(branch.Hash().String(), branch.Name())
+		log.Printf("Cloned %v, branch %v, with Commit ID %v", Url, branch.Name(), branch.Hash().String())
 		return nil
 	})
+
+	// // ... retrieving the branch being pointed by HEAD
+	// ref, err := r.Head()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// // ... retrieving the commit object
+	// commit, err := r.CommitObject(ref.Hash())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(commit)
+
 }

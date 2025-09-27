@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-git/clone"
+	"go-git/pull"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +19,7 @@ var filetype = []string{".yaml", ".properties"}
 
 func Retrieve_data(c *gin.Context) {
 
+	var found bool //by default bool is false
 	filename := c.Param("filename")
 	environment := c.Param("environment")
 
@@ -28,8 +30,14 @@ func Retrieve_data(c *gin.Context) {
 		for _, extension := range filetype {
 			openfile, err := os.OpenFile(clone.Path+"/"+files_folders+"-"+environment+extension, os.O_RDONLY, 0600)
 			if err != nil {
+				// File not found at this path, keep searching
 				continue
 			}
+
+			defer openfile.Close()
+
+			found = true
+			// c.IndentedJSON(http.StatusOK, gin.H{"Message": "File found"})
 
 			file_contents, err := io.ReadAll(openfile)
 			if err != nil {
@@ -66,9 +74,13 @@ func Retrieve_data(c *gin.Context) {
 
 				}
 			}
-
-			defer openfile.Close()
 		}
+
+	}
+
+	Message_body := fmt.Sprintf("file not found in clone branch %v in commit hash %v", clone.Branch, pull.Commit_being_fetched)
+	if !found {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"Message": Message_body})
 	}
 
 }

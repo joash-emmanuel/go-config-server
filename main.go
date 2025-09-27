@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go-git/clone"
 	"go-git/pull"
 	"go-git/servicefetch"
 
@@ -18,7 +19,7 @@ import (
 
 func main() {
 	// Loadenv()
-	// clone.Clone_configs()
+	clone.Clone_configs()
 
 	go pull.Pull_configs()
 

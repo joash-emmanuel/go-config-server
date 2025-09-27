@@ -13,6 +13,8 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 )
 
+var Commit_being_fetched plumbing.Hash
+
 func Pull_configs() {
 
 	forever := make(chan bool)
@@ -42,9 +44,9 @@ func Pull_configs() {
 			}
 			fmt.Printf("current hash in the folder - %v\n", local_commit_hash.Hash())
 
-			//compare the remote hash and local hash. If they're different, a pull is done
+			//compare the remote hash and local hash. If they're different, a pull is done from the remote site
 			if Remote_Hash != local_commit_hash.Hash() {
-				log.Println("New commit found")
+				log.Println("New commit found, pulling configs")
 				// Pull the latest changes from the origin remote and merge into the current branch
 				err = w.Pull(&git.PullOptions{
 					RemoteURL: clone.Url,
@@ -78,8 +80,11 @@ func Pull_configs() {
 					panic(err)
 				}
 				fmt.Println(commit.Hash)
+				// Commit_being_fetched = ref.Hash()
+
 			} else {
 				log.Println("No new commit")
+				Commit_being_fetched = local_commit_hash.Hash()
 			}
 
 			time.Sleep(2 * time.Second)
