@@ -23,7 +23,7 @@ pipeline {
         }
         stage ('checkout'){
             steps{
-                checkout scmGit(branches: [[name: env.BRANCH_NAME]], extensions: [], userRemoteConfigs: [[credentialsId: 'github-jenkins', url: env.GIT_URL]])
+                checkout scmGit(branches: [[name: env.GIT_BRANCH]], extensions: [], userRemoteConfigs: [[credentialsId: 'github-jenkins', url: env.GIT_URL]])
             }
 
         }
