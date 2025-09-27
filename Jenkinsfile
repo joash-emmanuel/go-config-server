@@ -30,7 +30,7 @@ pipeline {
 
         stage('Trivy SCA Scan') {
             steps {
-             sh " trivy fs ."
+             sh " trivy fs ." 
             }
         }
 
