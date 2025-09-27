@@ -1,0 +1,112 @@
+pipeline {
+    // agent {label "slave-A"}
+        agent any
+        //Environment variables
+        environment {
+        AWS_REGION  = 'us-west-2'
+        IMAGE_TAG="${env.BUILD_NUMBER}"
+        scannerHome = tool 'SonarQube' //configured on the sonarqube tools section/ global tools
+        }
+
+    stages{
+        stage('Get Repo Name') {
+            steps {
+                script {
+                    def gitUrl = env.GIT_URL
+                    // Extract the repository name (assuming a standard HTTPS or SSH URL)
+                    def repoName = gitUrl.replaceAll('.*\\/([^\\/]+?)(?:\\.git)?$', '$1')
+                    env.GIT_REPO_NAME = repoName // Set a new environment variable
+                    echo "Git Repository Name: ${env.GIT_REPO_NAME}"
+                    
+                }
+            }
+        }
+        stage ('checkout'){
+            steps{
+                checkout scmGit(branches: [[name: env.BRANCH_NAME]], extensions: [], userRemoteConfigs: [[credentialsId: 'github-jenkins', url: env.GIT_URL]])
+            }
+
+        }
+
+        stage('Trivy SCA Scan') {
+            steps {
+             sh " trivy fs ."
+            }
+        }
+
+
+       
+        stage("SonarQube analysis") {
+            agent any
+            steps {
+                // script{
+                //     def sonarprojectkey = env.GIT_REPO_NAME + "-" + env.BRANCH_NAME
+                //     env.SONAR_PROJECT_KEY_NAME = sonarprojectkey
+                //     echo "The SonarQube project key is: ${env.SONAR_PROJECT_KEY_NAME}"
+                // }
+                withSonarQubeEnv('SonarQube') { //Needs to match the name on the manage jenkins - Configure System page (sonarqube section)
+                sh """ ${scannerHome}/bin/sonar-scanner"""
+                    // -Dsonar.projectKey=${env.SONAR_PROJECT_KEY_NAME}\
+                    // -Dsonar.sources=."""
+                    //The following are passed in the SonarQube-Golang config on the jenkins systems global config
+                    // -Dsonar.host.url=http://sonarqube.joashtechapi.link:9000 \
+                    // -Dsonar.token=sqp_311f4950868a2e4a6bc1966b2b7ae36cb50c411b
+              }
+            }
+          }
+        stage('Quality Gate') {
+             steps {
+                timeout(time: 20, unit: 'MINUTES') {
+                waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage ('docker build') {
+            steps{
+                script{
+                    sh "docker build  -t ${env.GIT_REPO_NAME}:${IMAGE_TAG}-latest ."
+                }
+               
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh "trivy image --format json -o trivy-image-report.json ${env.GIT_REPO_NAME}:${IMAGE_TAG}-latest"
+            }
+        }
+
+        stage ('push to ecr') {
+            steps{ 
+                script {
+                    docker.withRegistry("https://711387104516.dkr.ecr.${AWS_REGION}.amazonaws.com", 'ecr:us-west-2:jenkins-aws') {
+                        sh "docker tag ${env.GIT_REPO_NAME}:${IMAGE_TAG}-latest 711387104516.dkr.ecr.us-west-2.amazonaws.com/${env.GIT_REPO_NAME}:prod-${IMAGE_TAG}-${env.BUILD_TIMESTAMP}"
+                        sh "docker push 711387104516.dkr.ecr.us-west-2.amazonaws.com/${env.GIT_REPO_NAME}:prod-${IMAGE_TAG}-${env.BUILD_TIMESTAMP}"    
+                    }
+                }
+            }
+        }
+
+        stage ('delete image/cleanup') {
+            steps {
+                script{
+                    sh "docker rmi 711387104516.dkr.ecr.us-west-2.amazonaws.com/${env.GIT_REPO_NAME}:prod-${IMAGE_TAG}-${env.BUILD_TIMESTAMP}"
+                    sh "docker rmi ${env.GIT_REPO_NAME}:${IMAGE_TAG}-latest"
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+// sonar-scanner \
+//   -Dsonar.projectKey=golang-tests \
+//   -Dsonar.sources=. \
+//   -Dsonar.host.url=http://sonarqube.joashtechapi.link:9000 \
+//   -Dsonar.token=sqp_311f4950868a2e4a6bc1966b2b7ae36cb50c411b
+//"${env.GIT_REPO_NAME}-${env.BRANCH_NAME}"
